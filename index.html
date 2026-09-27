@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Beyblade Scoreboard</title>
+    <style>
+        /* Mobile-optimized styling for a single page */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body, html { 
+            height: 100%; 
+            font-family: 'Segoe UI', Tahoma, sans-serif; 
+            overflow: hidden; 
+            overscroll-behavior: none; /* Stops swipe-to-refresh */
+            user-select: none; /* Stops accidental text selection */
+            -webkit-user-select: none;
+            background-color: #212121;
+        }
+        
+        #scoreboard { display: flex; height: 100%; width: 100%; flex-direction: row; }
+        
+        /* If held vertically, it stacks. If horizontal, it splits left/right */
+        @media (max-width: 600px) { #scoreboard { flex-direction: column; } }
+
+        .team { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; position: relative; }
+        #red-team { background-color: #D32F2F; }
+        #blue-team { background-color: #1976D2; }
+
+        .score-display { font-size: 35vmin; font-weight: bold; line-height: 1; text-shadow: 4px 4px 10px rgba(0,0,0,0.3); }
+        .controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 15px; padding: 0 10px; z-index: 2; }
+        
+        button { 
+            padding: 12px 14px; 
+            font-size: 1rem; 
+            font-weight: bold; 
+            border: 2px solid white; 
+            border-radius: 8px; 
+            background: rgba(255,255,255,0.15); 
+            color: white; 
+            cursor: pointer; 
+            touch-action: manipulation; /* Instant tap, no delay */
+        }
+        button:active { background: rgba(255,255,255,0.4); transform: scale(0.95); }
+        .minus-btn { background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.5); }
+
+        #top-bar { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); z-index: 10; }
+        #reset-btn { background-color: #212121; border: 2px solid #fff; padding: 10px 20px; border-radius: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        
+        #winner-banner { 
+            display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+            background: #FFD700; color: #000; padding: 20px 40px; font-size: 2rem; 
+            font-weight: bold; border-radius: 10px; z-index: 20; box-shadow: 0 4px 15px rgba(0,0,0,0.5); text-align: center; 
+        }
+    </style>
+</head>
+<body>
+
+    <div id="top-bar">
+        <button id="reset-btn" onclick="resetScores()">Reset Match</button>
+    </div>
+
+    <div id="winner-banner"></div>
+
+    <div id="scoreboard">
+        <div id="red-team" class="team">
+            <div class="score-display" id="red-score">0</div>
+            <div class="controls">
+                <button onclick="updateScore('red', 1)">+1 (Spin)</button>
+                <button onclick="updateScore('red', 2)">+2 (Over/Burst)</button>
+                <button onclick="updateScore('red', 3)">+3 (X-Treme)</button>
+                <button class="minus-btn" onclick="updateScore('red', -1)">-1</button>
+            </div>
+        </div>
+
+        <div id="blue-team" class="team">
+            <div class="score-display" id="blue-score">0</div>
+            <div class="controls">
+                <button onclick="updateScore('blue', 1)">+1 (Spin)</button>
+                <button onclick="updateScore('blue', 2)">+2 (Over/Burst)</button>
+                <button onclick="updateScore('blue', 3)">+3 (X-Treme)</button>
+                <button class="minus-btn" onclick="updateScore('blue', -1)">-1</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let scores = { red: 0, blue: 0 };
+        const targetScore = 4;
+        const banner = document.getElementById('winner-banner');
+        let matchOver = false;
+
+        function updateScore(team, points) {
+            if (matchOver && points > 0) return;
+            scores[team] += points;
+            if (scores[team] < 0) scores[team] = 0;
+            document.getElementById(team + '-score').innerText = scores[team];
+
+            if (scores[team] >= targetScore) {
+                matchOver = true;
+                banner.innerText = team.toUpperCase() + " WINS!";
+                banner.style.display = 'block';
+            } else {
+                matchOver = false;
+                banner.style.display = 'none';
+            }
+        }
+
+        function resetScores() {
+            scores.red = 0;
+            scores.blue = 0;
+            matchOver = false;
+            document.getElementById('red-score').innerText = '0';
+            document.getElementById('blue-score').innerText = '0';
+            banner.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
