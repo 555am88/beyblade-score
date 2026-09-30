@@ -3,17 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#0f172a" />
-  <title>Scoreboard App</title>
+  <meta name="theme-color" content="#090d16" />
+  <title>Red vs Blue Scoreboard</title>
   <style>
     :root {
-      --bg-color: #0f172a;
-      --card-bg: #1e293b;
-      --accent-color: #38bdf8;
-      --accent-hover: #0284c7;
+      --bg-color: #090d16;
+      --red-bg: #2c0b0e;
+      --red-accent: #ef4444;
+      --red-hover: #dc2626;
+      --red-card: #3f1217;
+      --blue-bg: #0b1a2c;
+      --blue-accent: #3b82f6;
+      --blue-hover: #2563eb;
+      --blue-card: #122844;
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
-      --danger-color: #ef4444;
       --safe-top: env(safe-area-inset-top, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
       --safe-left: env(safe-area-inset-left, 0px);
@@ -46,175 +50,205 @@
       width: 100%;
       height: 100%;
       height: 100dvh;
-      padding-top: calc(12px + var(--safe-top));
-      padding-bottom: calc(16px + var(--safe-bottom));
-      padding-left: calc(16px + var(--safe-left));
-      padding-right: calc(16px + var(--safe-right));
+      padding-top: max(8px, var(--safe-top));
+      padding-bottom: max(12px, var(--safe-bottom));
+      padding-left: max(8px, var(--safe-left));
+      padding-right: max(8px, var(--safe-right));
       position: relative;
     }
 
-    /* Top Navigation Bar */
+    /* Top Navigation / Global Controls */
     #top-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
       width: 100%;
-      height: 48px;
-      z-index: 50;
+      height: 44px;
+      padding: 0 8px;
+      z-index: 100;
       pointer-events: auto;
     }
 
-    .icon-btn {
-      background: var(--card-bg);
+    .brand-title {
+      font-size: 0.9rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .reset-btn {
+      background: #1e293b;
       border: 1px solid #334155;
-      color: var(--text-main);
-      font-size: 0.95rem;
-      font-weight: 600;
-      padding: 10px 16px;
-      border-radius: 10px;
+      color: #f8fafc;
+      font-size: 0.85rem;
+      font-weight: 700;
+      padding: 8px 16px;
+      border-radius: 8px;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 6px;
       transition: background 0.15s ease, transform 0.05s ease;
-      touch-action: manipulation;
       pointer-events: auto;
     }
 
-    .icon-btn:active {
-      transform: scale(0.96);
+    .reset-btn:active {
+      transform: scale(0.95);
       background: #334155;
     }
 
-    .icon-btn.danger {
-      color: var(--danger-color);
-      border-color: rgba(239, 68, 68, 0.3);
-    }
-
-    /* Score Display Zone */
-    #score-zone {
+    /* Scoreboard Layout: Split Screen */
+    #scoreboard {
       flex: 1;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      position: relative;
-      z-index: 10;
-      pointer-events: none; /* Allows underlying clicks to pass through if needed */
+      gap: 10px;
+      width: 100%;
+      height: calc(100% - 44px);
     }
 
-    #score-display {
-      font-size: clamp(8rem, 35vh, 40vw);
+    .team-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 20px;
+      padding: 12px 16px;
+      position: relative;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+    }
+
+    .red-panel {
+      background: linear-gradient(135deg, var(--red-bg) 0%, #170507 100%);
+      box-shadow: inset 0 0 40px rgba(239, 68, 68, 0.1);
+    }
+
+    .blue-panel {
+      background: linear-gradient(135deg, var(--blue-bg) 0%, #060e18 100%);
+      box-shadow: inset 0 0 40px rgba(59, 130, 246, 0.1);
+    }
+
+    .team-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      z-index: 2;
+    }
+
+    .team-name {
+      font-size: 1.1rem;
       font-weight: 800;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    .red-panel .team-name { color: var(--red-accent); }
+    .blue-panel .team-name { color: var(--blue-accent); }
+
+    /* Interactive Score Number */
+    .score-display {
+      font-size: clamp(5.5rem, 22vh, 28vw);
+      font-weight: 900;
       line-height: 0.9;
       letter-spacing: -0.04em;
       color: var(--text-main);
-      text-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-      transition: transform 0.1s ease;
+      text-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
       font-variant-numeric: tabular-nums;
-      pointer-events: auto;
       cursor: pointer;
+      z-index: 10;
+      pointer-events: auto;
+      transition: transform 0.1s ease;
+      margin: auto 0;
     }
 
-    #score-display:active {
-      transform: scale(1.03);
+    .score-display:active {
+      transform: scale(1.05);
     }
 
-    #score-label {
-      font-size: 1rem;
-      font-weight: 600;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      margin-bottom: 8px;
-    }
-
-    /* Bottom Control Bar */
-    #control-bar {
+    /* Control Buttons Grid */
+    .control-row {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
+      gap: 8px;
       width: 100%;
-      max-width: 600px;
-      margin: 0 auto;
-      z-index: 50;
-      position: relative;
+      max-width: 480px;
+      z-index: 20;
       pointer-events: auto;
     }
 
-    .score-btn {
-      background-color: var(--card-bg);
-      border: 1px solid #334155;
+    .btn {
+      border: none;
       color: var(--text-main);
-      font-size: 1.25rem;
+      font-size: 1.1rem;
       font-weight: 700;
-      height: 64px;
-      border-radius: 16px;
+      height: 52px;
+      border-radius: 12px;
       display: flex;
       justify-content: center;
       align-items: center;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-      transition: background 0.15s ease, transform 0.08s ease, border-color 0.15s ease;
-      touch-action: manipulation;
+      transition: background 0.12s ease, transform 0.08s ease;
       pointer-events: auto;
+      touch-action: manipulation;
     }
 
-    .score-btn:active {
-      transform: scale(0.95);
-      background-color: #334155;
+    .btn:active {
+      transform: scale(0.93);
     }
 
-    .score-btn.primary {
-      background-color: var(--accent-color);
+    /* Red Buttons */
+    .red-panel .btn {
+      background-color: var(--red-card);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .red-panel .btn.btn-primary {
+      background-color: var(--red-accent);
       color: #0f172a;
       border: none;
     }
+    .red-panel .btn.btn-primary:active { background-color: var(--red-hover); }
 
-    .score-btn.primary:active {
-      background-color: var(--accent-hover);
+    /* Blue Buttons */
+    .blue-panel .btn {
+      background-color: var(--blue-card);
+      border: 1px solid rgba(59, 130, 246, 0.3);
     }
+    .blue-panel .btn.btn-primary {
+      background-color: var(--blue-accent);
+      color: #0f172a;
+      border: none;
+    }
+    .blue-panel .btn.btn-primary:active { background-color: var(--blue-hover); }
 
-    /* LANDSCAPE OPTIMIZATIONS */
+    /* LANDSCAPE MODE OPTIMIZATIONS */
     @media (orientation: landscape) {
-      #app-container {
-        display: grid;
-        grid-template-columns: 1fr 220px;
-        grid-template-rows: 48px 1fr;
-        grid-template-areas:
-          "top top"
-          "score controls";
+      #scoreboard {
+        flex-direction: row;
         gap: 12px;
-        padding-bottom: calc(12px + var(--safe-bottom));
       }
 
-      #top-bar {
-        grid-area: top;
+      .team-panel {
+        padding: 12px 16px calc(8px + var(--safe-bottom));
       }
 
-      #score-zone {
-        grid-area: score;
-        height: 100%;
-      }
-
-      /* Ultra-scaled landscape score digits */
-      #score-display {
-        font-size: clamp(10rem, 65vh, 48vw);
+      /* Massive Landscape Score Digits */
+      .score-display {
+        font-size: clamp(8rem, 46vh, 32vw);
         line-height: 0.85;
       }
 
-      #control-bar {
-        grid-area: controls;
-        grid-template-columns: 1fr 1fr;
-        grid-template-rows: 1fr 1fr;
-        height: 100%;
-        max-width: none;
-        align-content: stretch;
+      .control-row {
+        gap: 10px;
+        max-width: 100%;
       }
 
-      .score-btn {
-        height: 100%;
-        font-size: 1.5rem;
+      .btn {
+        height: 56px;
+        font-size: 1.25rem;
       }
     }
   </style>
@@ -222,62 +256,86 @@
 <body>
 
   <div id="app-container">
-    <!-- Top Bar Navigation -->
+    <!-- Top Bar -->
     <div id="top-bar">
-      <button class="icon-btn danger" id="btn-reset" onclick="resetScore()">
-        <span>↺</span> Reset
-      </button>
-      <button class="icon-btn" id="btn-minus" onclick="changeScore(-1)">
-        <span>−1</span> Undo
+      <div class="brand-title">Scoreboard</div>
+      <button class="reset-btn" onclick="resetAll()">
+        <span>↺</span> Reset All
       </button>
     </div>
 
-    <!-- Center Score Zone -->
-    <div id="score-zone">
-      <div id="score-label">Current Score</div>
-      <div id="score-display" onclick="changeScore(1)">0</div>
-    </div>
+    <!-- Dual Team Scoreboard -->
+    <div id="scoreboard">
+      
+      <!-- RED TEAM -->
+      <div class="team-panel red-panel">
+        <div class="team-header">
+          <span class="team-name">RED TEAM</span>
+        </div>
+        
+        <div class="score-display" id="red-score" onclick="changeScore('red', 1)">0</div>
 
-    <!-- Bottom / Side Buttons -->
-    <div id="control-bar">
-      <button class="score-btn" onclick="changeScore(1)">+1</button>
-      <button class="score-btn" onclick="changeScore(2)">+2</button>
-      <button class="score-btn primary" onclick="changeScore(3)">+3</button>
-      <button class="score-btn" onclick="changeScore(-1)">-1</button>
+        <div class="control-row">
+          <button class="btn" onclick="changeScore('red', -1)">-1</button>
+          <button class="btn" onclick="changeScore('red', 1)">+1</button>
+          <button class="btn" onclick="changeScore('red', 2)">+2</button>
+          <button class="btn btn-primary" onclick="changeScore('red', 3)">+3</button>
+        </div>
+      </div>
+
+      <!-- BLUE TEAM -->
+      <div class="team-panel blue-panel">
+        <div class="team-header">
+          <span class="team-name">BLUE TEAM</span>
+        </div>
+
+        <div class="score-display" id="blue-score" onclick="changeScore('blue', 1)">0</div>
+
+        <div class="control-row">
+          <button class="btn" onclick="changeScore('blue', -1)">-1</button>
+          <button class="btn" onclick="changeScore('blue', 1)">+1</button>
+          <button class="btn" onclick="changeScore('blue', 2)">+2</button>
+          <button class="btn btn-primary" onclick="changeScore('blue', 3)">+3</button>
+        </div>
+      </div>
+
     </div>
   </div>
 
   <script>
-    let score = 0;
-    const scoreDisplay = document.getElementById('score-display');
+    const scores = {
+      red: 0,
+      blue: 0
+    };
 
-    function updateDisplay() {
-      scoreDisplay.textContent = score;
-    }
+    const redDisplay = document.getElementById('red-score');
+    const blueDisplay = document.getElementById('blue-score');
 
-    function changeScore(delta) {
-      score = Math.max(0, score + delta);
-      updateDisplay();
+    function changeScore(team, delta) {
+      scores[team] = Math.max(0, scores[team] + delta);
+      
+      const el = team === 'red' ? redDisplay : blueDisplay;
+      el.textContent = scores[team];
 
-      // Quick visual bounce feedback
-      scoreDisplay.style.transform = 'scale(1.08)';
+      // Bounce effect on score update
+      el.style.transform = 'scale(1.1)';
       setTimeout(() => {
-        scoreDisplay.style.transform = 'scale(1)';
+        el.style.transform = 'scale(1)';
       }, 100);
     }
 
-    function resetScore() {
-      if (score === 0) return;
-      score = 0;
-      updateDisplay();
+    function resetAll() {
+      if (scores.red === 0 && scores.blue === 0) return;
+      scores.red = 0;
+      scores.blue = 0;
+      redDisplay.textContent = '0';
+      blueDisplay.textContent = '0';
     }
 
-    // Register Service Worker for PWA compliance
+    // Register Service Worker for offline PWA support
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(() => {
-          // SW registration fallback
-        });
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
       });
     }
   </script>
