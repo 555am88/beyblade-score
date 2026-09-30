@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Beyblade X Scoreboard</title>
     
     <!-- PWA & Mobile Web App Meta Tags -->
@@ -24,8 +24,9 @@
         }
 
         body, html {
-            height: 100%;
-            width: 100%;
+            height: 100vh;
+            height: 100dvh; /* Dynamic viewport height adjusts for browser bars */
+            width: 100vw;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             overflow: hidden;
             background-color: #121212;
@@ -36,11 +37,12 @@
             display: flex;
             flex-direction: row;
             height: 100vh;
+            height: 100dvh; /* Dynamic viewport height */
             width: 100vw;
             position: relative;
         }
 
-        /* Solid, uniform background across the full side */
+        /* Solid, uniform background across each full team side */
         .team-side {
             flex: 1;
             position: relative;
@@ -70,10 +72,10 @@
             display: flex;
             justify-content: center;
             align-items: flex-start;
-            padding-top: 24px;
+            padding-top: calc(24px + env(safe-area-inset-top, 0px));
         }
 
-        /* Lower half tap zone (-1 Point) */
+        /* Lower half tap zone (-1 Point & Buttons) */
         .tap-zone-lower {
             position: absolute;
             top: 50%;
@@ -86,7 +88,8 @@
             flex-direction: column;
             justify-content: flex-end;
             align-items: center;
-            padding-bottom: 20px;
+            /* Safe area padding prevents browser bottom gesture/nav bar from covering buttons */
+            padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px));
             padding-left: 12px;
             padding-right: 12px;
         }
@@ -104,15 +107,15 @@
             margin-bottom: 8px;
         }
 
-        /* Large white score digit positioned at vertical and horizontal center */
+        /* Large white score digit positioned cleanly above controls */
         .score-display {
             position: absolute;
-            top: 48%;
+            top: 45%;
             left: 50%;
             transform: translate(-50%, -50%);
             z-index: 5;
             pointer-events: none; /* Taps pass through to tap zones underneath */
-            font-size: 30vmin;
+            font-size: 32vmin;
             font-weight: 900;
             line-height: 1;
             color: #ffffff;
@@ -152,10 +155,10 @@
             background: rgba(255, 255, 255, 0.45);
         }
 
-        /* Top bar reset button */
+        /* Top bar reset button with safe area top spacing */
         #top-bar {
             position: absolute;
-            top: 16px;
+            top: calc(16px + env(safe-area-inset-top, 0px));
             left: 50%;
             transform: translateX(-50%);
             z-index: 30;
@@ -219,10 +222,10 @@
             letter-spacing: 1px;
         }
 
-        /* Landscape Mode & Low Screen Height Optimization (< 520px) */
-        @media (max-height: 520px) {
+        /* Landscape Mode & Low Screen Height Optimization (< 540px height or landscape orientation) */
+        @media (max-height: 540px), (orientation: landscape) and (max-height: 600px) {
             #top-bar {
-                top: 8px;
+                top: calc(8px + env(safe-area-inset-top, 0px));
             }
 
             .reset-btn {
@@ -231,13 +234,14 @@
                 border-width: 1.5px;
             }
 
+            /* Scaled up score display size in landscape mode while avoiding overlap */
             .score-display {
                 top: 36%;
-                font-size: 24vmin;
+                font-size: 35vmin;
             }
 
             .tap-zone-upper {
-                padding-top: 10px;
+                padding-top: calc(10px + env(safe-area-inset-top, 0px));
             }
 
             .tap-hint {
@@ -246,7 +250,7 @@
             }
 
             .tap-zone-lower {
-                padding-bottom: 8px;
+                padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
                 padding-left: 8px;
                 padding-right: 8px;
             }
@@ -416,14 +420,15 @@
             }
         });
     </script>
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js')
-        .then(reg => console.log('SW registered!', reg))
-        .catch(err => console.error('SW registration failed:', err));
-    });
-  }
-</script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('ServiceWorker registered successfully:', reg))
+                    .catch(err => console.error('ServiceWorker registration failed:', err));
+            });
+        }
+    </script>
 </body>
 </html>
