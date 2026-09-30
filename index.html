@@ -4,11 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Beyblade X Scoreboard</title>
-	<link rel="manifest" href="manifest.json">
-	<meta name="mobile-web-app-capable" content="yes">
-	<meta name="apple-mobile-web-app-capable" content="yes">
-	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-	<meta name="theme-color" content="#212121">
+    
+    <!-- PWA & Mobile Web App Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#212121">
+
     <style>
         * {
             box-sizing: border-box;
@@ -101,29 +104,30 @@
             margin-bottom: 8px;
         }
 
-        /* Large white score digit positioned at exact vertical and horizontal center */
+        /* Large white score digit positioned at vertical and horizontal center */
         .score-display {
             position: absolute;
-            top: 50%;
+            top: 48%;
             left: 50%;
             transform: translate(-50%, -50%);
             z-index: 5;
             pointer-events: none; /* Taps pass through to tap zones underneath */
-            font-size: 32vmin;
+            font-size: 30vmin;
             font-weight: 900;
             line-height: 1;
             color: #ffffff;
             text-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
             user-select: none;
+            transition: top 0.2s ease, font-size 0.2s ease;
         }
 
-        /* 3-Button container at the bottom */
+        /* Button container at bottom of each side */
         .button-group {
             display: flex;
             flex-direction: column;
             gap: 8px;
             width: 100%;
-            max-width: 220px;
+            max-width: 230px;
             z-index: 10; /* Sits above tap zone */
         }
 
@@ -214,6 +218,64 @@
             border: 3px solid #ffffff;
             letter-spacing: 1px;
         }
+
+        /* Landscape Mode & Low Screen Height Optimization (< 520px) */
+        @media (max-height: 520px) {
+            #top-bar {
+                top: 8px;
+            }
+
+            .reset-btn {
+                padding: 6px 18px;
+                font-size: 0.85rem;
+                border-width: 1.5px;
+            }
+
+            .score-display {
+                top: 36%;
+                font-size: 24vmin;
+            }
+
+            .tap-zone-upper {
+                padding-top: 10px;
+            }
+
+            .tap-hint {
+                font-size: 0.65rem;
+                letter-spacing: 1px;
+            }
+
+            .tap-zone-lower {
+                padding-bottom: 8px;
+                padding-left: 8px;
+                padding-right: 8px;
+            }
+
+            .tap-hint-bottom {
+                margin-bottom: 4px;
+            }
+
+            /* Lay buttons out side-by-side horizontally in landscape */
+            .button-group {
+                flex-direction: row;
+                max-width: 96%;
+                gap: 6px;
+            }
+
+            .score-btn {
+                flex: 1;
+                padding: 8px 4px;
+                font-size: 0.78rem;
+                border-radius: 8px;
+                white-space: nowrap;
+                text-align: center;
+            }
+
+            #winner-banner {
+                padding: 14px 28px;
+                font-size: 1.6rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -236,7 +298,7 @@
                 <span class="tap-hint">TAP UPPER (+1)</span>
             </div>
 
-            <!-- Score Digit placed in exact center level of side -->
+            <!-- Score Digit placed cleanly above controls -->
             <div class="score-display" id="red-score">0</div>
 
             <!-- Lower Tap Zone (-1 Point & Action Buttons) -->
@@ -244,7 +306,7 @@
                 <span class="tap-hint tap-hint-bottom">TAP LOWER (-1)</span>
                 <div class="button-group">
                     <button class="score-btn" onclick="handleScoreButton('red', 1, event)">+1 (Spin)</button>
-                    <button class="score-btn" onclick="handleScoreButton('red', 2, event)">+2 (Over / Burst)</button>
+                    <button class="score-btn" onclick="handleScoreButton('red', 2, event)">+2 (Over/Burst)</button>
                     <button class="score-btn" onclick="handleScoreButton('red', 3, event)">+3 (X-Treme)</button>
                 </div>
             </div>
@@ -257,7 +319,7 @@
                 <span class="tap-hint">TAP UPPER (+1)</span>
             </div>
 
-            <!-- Score Digit placed in exact center level of side -->
+            <!-- Score Digit placed cleanly above controls -->
             <div class="score-display" id="blue-score">0</div>
 
             <!-- Lower Tap Zone (-1 Point & Action Buttons) -->
@@ -265,7 +327,7 @@
                 <span class="tap-hint tap-hint-bottom">TAP LOWER (-1)</span>
                 <div class="button-group">
                     <button class="score-btn" onclick="handleScoreButton('blue', 1, event)">+1 (Spin)</button>
-                    <button class="score-btn" onclick="handleScoreButton('blue', 2, event)">+2 (Over / Burst)</button>
+                    <button class="score-btn" onclick="handleScoreButton('blue', 2, event)">+2 (Over/Burst)</button>
                     <button class="score-btn" onclick="handleScoreButton('blue', 3, event)">+3 (X-Treme)</button>
                 </div>
             </div>
