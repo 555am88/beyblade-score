@@ -1,0 +1,9 @@
+{
+  "name": "Beyblade Scoreboard",
+  "short_name": "BeyScore",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#212121",
+  "theme_color": "#212121"
+}
