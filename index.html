@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Beyblade X Scoreboard (Landscape Pro)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            background-color: #0b0f19;
+            color: #ffffff;
+            overflow: hidden;
+        }
+        .font-score {
+            font-family: 'Orbitron', sans-serif;
+        }
+        /* Custom scrollbar for round history */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body class="h-full w-full flex flex-col justify-between overflow-hidden">
+
+    <!-- Top Bar -->
+    <header class="h-10 bg-slate-900/80 border-b border-slate-800 flex items-center justify-between px-4 z-20 shrink-0">
+        <div class="flex items-center space-x-2">
+            <span class="bg-gradient-to-r from-red-500 to-blue-500 text-transparent bg-clip-text font-black tracking-wider text-sm sm:text-base font-score">
+                BEYBLADE X <span class="text-xs font-normal text-slate-400">SCOREBOARD</span>
+            </span>
+        </div>
+        <div class="flex items-center space-x-3">
+            <button id="fullscreen-btn" onclick="toggleFullscreen()" class="text-slate-400 hover:text-white px-2 py-1 rounded text-xs bg-slate-800 border border-slate-700 transition">
+                <i class="fa-solid fa-expand mr-1"></i> 全螢幕
+            </button>
+            <button onclick="openSettings()" class="text-slate-400 hover:text-white px-2 py-1 rounded text-xs bg-slate-800 border border-slate-700 transition">
+                <i class="fa-solid fa-gear mr-1"></i> 設定
+            </button>
+            <button onclick="resetMatchConfirm()" class="text-red-400 hover:text-red-300 px-2 py-1 rounded text-xs bg-red-950/40 border border-red-900/50 transition">
+                <i class="fa-solid fa-rotate-right mr-1"></i> 重置
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Split Screen Layout (Optimized for Landscape) -->
+    <main class="flex-1 flex flex-row relative overflow-hidden">
+
+        <!-- ==================== PLAYER 1 (RED SIDE) ==================== -->
+        <section class="flex-1 bg-gradient-to-br from-red-950/90 via-red-900/40 to-slate-950 border-r border-red-900/30 flex flex-col justify-between p-3 relative overflow-hidden">
+            <!-- Background Watermark / Glow -->
+            <div class="absolute -bottom-10 -left-10 w-64 h-64 bg-red-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <!-- Player Header -->
+            <div class="flex justify-between items-center z-10">
+                <div class="flex items-center space-x-2">
+                    <span class="w-3 h-3 rounded-full bg-red-500 animate-pulse shadow-[0_0_10px_#ef4444]"></span>
+                    <input type="text" id="p1-name" value="赤紅玩家 (RED)" class="bg-transparent font-bold text-red-400 text-sm sm:text-lg focus:outline-none focus:border-b border-red-500 w-36 sm:w-48" />
+                </div>
+                <!-- Fine tuning score buttons -->
+                <div class="flex space-x-1">
+                    <button onclick="adjustScore(1, -1)" class="w-8 h-8 rounded bg-red-950/80 border border-red-800 text-red-300 active:scale-95 flex items-center justify-center font-bold text-sm shadow hover:bg-red-900">-1</button>
+                    <button onclick="adjustScore(1, 1)" class="w-8 h-8 rounded bg-red-950/80 border border-red-800 text-red-300 active:scale-95 flex items-center justify-center font-bold text-sm shadow hover:bg-red-900">+1</button>
+                </div>
+            </div>
+
+            <!-- Central Score Display & Match Point Alert -->
+            <div class="flex flex-col items-center justify-center my-auto z-10">
+                <div id="p1-matchpoint-badge" class="hidden mb-1 px-3 py-0.5 rounded-full bg-red-600 text-white font-black text-xs uppercase tracking-widest animate-bounce shadow-[0_0_15px_#dc2626]">
+                    Match Point!
+                </div>
+                <div id="p1-score" class="font-score text-7xl sm:text-9xl font-black text-red-500 drop-shadow-[0_0_25px_rgba(239,68,68,0.5)]">
+                    0
+                </div>
+            </div>
+
+            <!-- Quick Finish Scoring Buttons (Beyblade X Official 4-Point System) -->
+            <div class="grid grid-cols-2 gap-2 z-10">
+                <button onclick="scoreFinish(1, 'spin', 1)" class="bg-gradient-to-r from-red-900/60 to-red-800/40 hover:from-red-800 hover:to-red-700 border border-red-700/50 rounded-xl p-2.5 flex flex-col items-center justify-center active:scale-95 transition shadow-lg group">
+                    <span class="text-xs font-semibold text-red-200 group-hover:text-white">持久勝 Spin Finish</span>
+                    <span class="font-score text-lg sm:text-xl font-bold text-red-400">+1 pt</span>
+                </button>
+                <button onclick="scoreFinish(1, 'over', 2)" class="bg-gradient-to-r from-red-900/60 to-red-800/40 hover:from-red-800 hover:to-red-700 border border-red-700/50 rounded-xl p-2.5 flex flex-col items-center justify-center active:scale-95 transition shadow-lg group">
+                    <span class="text-xs font-semibold text-red-200 group-hover:text-white">擊飛勝 Over Finish</span>
+                    <span class="font-score text-lg sm:text-xl font-bold text-red-400">+2 pts</span>
+                </button>
+                <button onclick="scoreFinish(1, 'burst', 2)" class="bg-gradient-to-r from-red-900/60 to-red-800/40 hover:from-red-800 hover:to-red-700 border border-red-700/50 rounded-xl p-2.5 flex flex-col items-center justify-center active:scale-95 transition shadow-lg group">
+                    <span class="text-xs font-semibold text-red-200 group-hover:text-white">爆裂勝 Burst Finish</span>
+                    <span class="font-score text-lg sm:text-xl font-bold text-red-400">+2 pts</span>
+                </button>
+                <button onclick="scoreFinish(1, 'xtreme', 3)" class="bg-gradient-to-r from-red-700 to-red-600 hover:from-red-600 hover:to-red-500 border border-red-500 rounded-xl p-2.5 flex flex-col items-center justify-center active:scale-95 transition shadow-lg group">
+                    <span class="text-xs font-bold text-white">極限勝 Xtreme Finish</span>
+                    <span class="font-score text-lg sm:text-xl font-bold text-yellow-300">+3 pts</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Center Divider & Match Control Console -->
+        <div class="w-20 bg-slate-900/90 border-x border-slate-800 flex flex-col items-center justify-between py-3 z-20 shrink-0">
+            <!-- Round / Timer info -->
+            <div class="flex flex-col items-center space-y-1">
+                <span class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">回合</span>
+                <span id="round-counter" class="font-score text-lg font-black text-slate-200">R1</span>
+            </div>
+
+            <!-- Center Action Buttons (Undo & History) -->
+            <div class="flex flex-col space-y-3 items-center">
+                <button onclick="undoLastAction()" title="復原上一回合" class="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 flex items-center justify-center active:scale-95 transition shadow">
+                    <i class="fa-solid fa-rotate-left text-sm"></i>
+                </button>
+                <button onclick="toggleHistoryDrawer()" title="對戰記錄" class="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 flex items-center justify-center active:scale-95 transition shadow relative">
+                    <i class="fa-solid fa-clock-rotate-left text-sm"></i>
+                    <span id="history-badge" class="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 text-[9px] rounded-full flex items-center justify-center font-bold text-white hidden">0</span>
+                </button>
+            </div>
+
+            <!-- VS Badge -->
+            <div class="bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1 text-center">
+                <span class="text-xs font-black tracking-widest bg-gradient-to-r from-red-500 to-blue-500 text-transparent bg-clip-text">VS</span>
+            </div>
+        </div>
+
+        <!-- ==================== PLAYER 2 (BLUE SIDE) ==================== -->
+        <section class="flex-1 bg-gradient-to-br from-slate-950 via-blue-900/40 to-blue-950/90 border-l border-blue-900/30 flex flex-col justify-between p-3 relative overflow-hidden">
+            <!-- Background Watermark / Glow -->
+            <div class="absolute -bottom-10 -right-10 w-64 h-64 bg-cyan-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <!-- Player Header -->
+            <div class="flex justify-between items-center z-10">
+                <!-- Fine tuning score buttons -->
+                <div class="flex space-x-1">
+                    <button onclick="adjustScore(2, -1)" class="w-8 h-8 rounded bg-blue-950/80 border border-blue-800 text-blue-300 active:scale-95 flex items-center justify-center font-bold text-sm shadow hover:bg-blue-900">-1</button>
+                    <button onclick="adjustScore(2, 1)" class="w-8 h-8 rounded bg-blue-950/80 border border-blue-800 text-blue-300 active:scale-95 flex items-center justify-center font-bold text-sm shadow hover:bg-blue-900">+1</button>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <input type="text" id="p2-name" value="蒼藍玩家 (BLUE)" class="bg-transparent font-bold text-blue-400 text-sm sm:text-lg text-right focus:outline-none focus:border-b border-blue-500 w-36 sm:w-48" />
+                    <span class="w-3 h-3 rounded-full bg-cyan-500 animate-pulse shadow-[0_0_10px_#06b6d4]"></span>
+                </div>
+            </div>
+
+            <!-- Central Score Display & Match Point Alert -->
+            <div class="flex flex-col items-center justify-center my-auto z-10">
+                <div id="p2-matchpoint-badge" class="hidden mb-1 px-3 py-0.5 rounded-full bg-cyan-600 text-white font-black text-xs uppercase tracking-widest animate-bounce shadow-[0_0_15px_#0891b2]">
+                    Match Point!
+                </div>
+                <div id="p2-score" class="font-score text-7xl sm:text-9xl font-black text-cyan-400 drop-shadow-[0_0_25px_rgba(6,182,212,0.5)]">
+                    0
+                </div>
+            </div>
+
+            <!-- Quick Finish Scoring Buttons (Beyblade X Official 4-Point System) -->
+            <div class="grid grid-cols-2 gap-2 z-10">
+                <button onclick="scoreFinish(2, 'spin', 1)" class="bg-gradient-to-r from-blue-900/60 to-blue-800/40 hover:from-blue-800 hover:to-blue-700 border border-blue-700/50 rounded-xl p-2.5 flex flex-col items-center justify-center active:scale-95 transition shadow-lg group">
+                    <span class="text-xs font-semibold text-blue-200 group-hover:text-white">持久勝 Spin Finish</span>
+                    <span class="font-score text-lg sm:text-xl font-bold text-blue-400">+1 pt</span>
+                </button>
+                <button onclick="scoreFinish(2, 'over', 2)" class="bg-gradient-to-r from-blue-900/60 to-blue-800/40 hover:from-blue-800 hover:to-blue-700 border border-blue-700/50 rounded-xl p-2.5 flex flex-col items-center justify-center active:scale-95 transition shadow-lg group">
+                    <span class="text-xs font-semibold text-blue-200 group-hover:text-white">擊飛勝 Over Finish</span>
+                    <span class="font-score text-lg sm:text-xl font-bold text-blue-400">+2 pts</span>
+                </button>
+                <button onclick="scoreFinish(2, 'burst', 2)" class="bg-gradient-to-r from-blue-900/60 to-blue-800/40 hover:from-blue-800 hover:to-blue-700 border border-blue-700/50 rounded-xl p-2.5 flex flex-col items-center justify-center active:scale-95 transition shadow-lg group">
+                    <span class="text-xs font-semibold text-blue-200 group-hover:text-white">爆裂勝 Burst Finish</span>
+                    <span class="font-score text-lg sm:text-xl font-bold text-blue-400">+2 pts</span>
+                </button>
+                <button onclick="scoreFinish(2, 'xtreme', 3)" class="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 border border-cyan-400 rounded-xl p-2.5 flex flex-col items-center justify-center active:scale-95 transition shadow-lg group">
+                    <span class="text-xs font-bold text-white">極限勝 Xtreme Finish</span>
+                    <span class="font-score text-lg sm:text-xl font-bold text-yellow-300">+3 pts</span>
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- History Modal / Drawer -->
+    <div id="history-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl p-5 flex flex-col max-h-[85vh] shadow-2xl">
+            <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+                <h3 class="font-bold text-base text-slate-200 flex items-center">
+                    <i class="fa-solid fa-clock-rotate-left mr-2 text-blue-400"></i> 對戰記錄明細
+                </h3>
+                <button onclick="toggleHistoryDrawer()" class="text-slate-400 hover:text-white w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div id="history-list" class="flex-1 overflow-y-auto py-3 space-y-2">
+                <div class="text-center text-slate-500 text-sm py-6">尚無對戰記錄</div>
+            </div>
+            <div class="pt-3 border-t border-slate-800 flex justify-end">
+                <button onclick="toggleHistoryDrawer()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold">關閉</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-5 flex flex-col shadow-2xl">
+            <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+                <h3 class="font-bold text-base text-slate-200 flex items-center">
+                    <i class="fa-solid fa-gear mr-2 text-purple-400"></i> 比賽設定
+                </h3>
+                <button onclick="openSettings()" class="text-slate-400 hover:text-white w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="py-4 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">勝利點數目標 (預設 4 分)</label>
+                    <select id="target-points-select" onchange="updateTargetPoints(this.value)" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                        <option value="4" selected>4 分制 (官方標準)</option>
+                        <option value="5">5 分制</option>
+                        <option value="7">7 分制</option>
+                        <option value="10">10 分制</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">音效回饋</label>
+                    <div class="flex items-center justify-between bg-slate-800/60 p-3 rounded-xl border border-slate-700/50">
+                        <span class="text-sm text-slate-200">啟用按鍵與勝利音效</span>
+                        <input type="checkbox" id="sound-toggle" checked class="w-4 h-4 accent-blue-500 rounded cursor-pointer" />
+                    </div>
+                </div>
+            </div>
+            <div class="pt-3 border-t border-slate-800 flex justify-end">
+                <button onclick="openSettings()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold">儲存並返回</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Victory Banner Overlay -->
+    <div id="victory-modal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+        <div class="w-20 h-20 rounded-full bg-yellow-500/20 border-2 border-yellow-500 flex items-center justify-center mb-4 text-yellow-400 text-3xl shadow-[0_0_30px_rgba(234,179,8,0.5)] animate-bounce">
+            <i class="fa-solid fa-trophy"></i>
+        </div>
+        <span class="text-xs uppercase font-black tracking-widest text-yellow-400 mb-1">MATCH WINNER!</span>
+        <h2 id="winner-name-display" class="font-score text-4xl sm:text-6xl font-black text-white mb-6 drop-shadow-lg">赤紅玩家 獲勝！</h2>
+        <div class="flex space-x-4">
+            <button onclick="startNewMatch()" class="px-6 py-3 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-slate-950 font-black rounded-xl text-sm sm:text-base shadow-lg transition active:scale-95 flex items-center">
+                <i class="fa-solid fa-play mr-2"></i> 開始新對戰
+            </button>
+            <button onclick="closeVictoryModal()" class="px-5 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl text-sm transition active:scale-95">
+                查看比分
+            </button>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        let state = {
+            p1Score: 0,
+            p2Score: 0,
+            targetPoints: 4,
+            round: 1,
+            history: [] // Array of {round, player, type, points, p1Total, p2Total}
+        };
+
+        // Web Audio API Synthesizer for instant satisfying sound effects
+        let audioCtx = null;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSound(type) {
+            const soundEnabled = document.getElementById('sound-toggle').checked;
+            if (!soundEnabled) return;
+            try {
+                initAudio();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+                if (type === 'score') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.15);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                } else if (type === 'win') {
+                    // Victory chime
+                    [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+                        const o = audioCtx.createOscillator();
+                        const g = audioCtx.createGain();
+                        o.type = 'sine';
+                        o.frequency.setValueAtTime(freq, now + i * 0.1);
+                        o.connect(g);
+                        g.connect(audioCtx.destination);
+                        g.gain.setValueAtTime(0.25, now + i * 0.1);
+                        g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.4);
+                        o.start(now + i * 0.1);
+                        o.stop(now + i * 0.1 + 0.4);
+                    });
+                }
+            } catch (e) {
+                console.log('Audio autoplay prevented or unsupported');
+            }
+        }
+
+        function scoreFinish(playerNum, finishTypeKey, points) {
+            initAudio();
+            const p1Name = document.getElementById('p1-name').value;
+            const p2Name = document.getElementById('p2-name').value;
+            const playerName = playerNum === 1 ? p1Name : p2Name;
+
+            let typeName = '';
+            switch(finishTypeKey) {
+                case 'spin': typeName = '持久勝 (Spin Finish)'; break;
+                case 'over': typeName = '擊飛勝 (Over Finish)'; break;
+                case 'burst': typeName = '爆裂勝 (Burst Finish)'; break;
+                case 'xtreme': typeName = '極限勝 (Xtreme Finish)'; break;
+            }
+
+            if (playerNum === 1) {
+                state.p1Score += points;
+            } else {
+                state.p2Score += points;
+            }
+
+            playSound('score');
+
+            // Record history
+            state.history.push({
+                round: state.round,
+                player: playerName,
+                playerNum: playerNum,
+                type: typeName,
+                points: points,
+                p1Total: state.p1Score,
+                p2Total: state.p2Score
+            });
+
+            state.round++;
+            updateUI();
+            checkMatchPointAndWinner();
+        }
+
+        function adjustScore(playerNum, delta) {
+            initAudio();
+            if (playerNum === 1) {
+                state.p1Score = Math.max(0, state.p1Score + delta);
+            } else {
+                state.p2Score = Math.max(0, state.p2Score + delta);
+            }
+            playSound('score');
+            updateUI();
+            checkMatchPointAndWinner();
+        }
+
+        function undoLastAction() {
+            if (state.history.length === 0) return;
+            initAudio();
+            const last = state.history.pop();
+            state.p1Score = state.history.length > 0 ? state.history[state.history.length - 1].p1Total : 0;
+            state.p2Score = state.history.length > 0 ? state.history[state.history.length - 1].p2Total : 0;
+            state.round = Math.max(1, state.round - 1);
+            updateUI();
+            // Hide victory modal if undoing from a winning state
+            document.getElementById('victory-modal').classList.add('hidden');
+        }
+
+        function resetMatchConfirm() {
+            if (confirm('確定要重置目前對戰分數嗎？')) {
+                state.p1Score = 0;
+                state.p2Score = 0;
+                state.round = 1;
+                state.history = [];
+                updateUI();
+                document.getElementById('victory-modal').classList.add('hidden');
+            }
+        }
+
+        function startNewMatch() {
+            state.p1Score = 0;
+            state.p2Score = 0;
+            state.round = 1;
+            state.history = [];
+            updateUI();
+            document.getElementById('victory-modal').classList.add('hidden');
+        }
+
+        function checkMatchPointAndWinner() {
+            const target = state.targetPoints;
+            const p1Badge = document.getElementById('p1-matchpoint-badge');
+            const p2Badge = document.getElementById('p2-matchpoint-badge');
+
+            // Match Point Check
+            if (state.p1Score >= target - 1 && state.p1Score < target && state.p1Score > state.p2Score) {
+                p1Badge.classList.remove('hidden');
+            } else {
+                p1Badge.classList.add('hidden');
+            }
+
+            if (state.p2Score >= target - 1 && state.p2Score < target && state.p2Score > state.p1Score) {
+                p2Badge.classList.remove('hidden');
+            } else {
+                p2Badge.classList.add('hidden');
+            }
+
+            // Winner Check (First to reach target points)
+            if (state.p1Score >= target || state.p2Score >= target) {
+                const winnerName = state.p1Score >= target ? document.getElementById('p1-name').value : document.getElementById('p2-name').value;
+                document.getElementById('winner-name-display').innerText = `${winnerName} 獲勝！`;
+                playSound('win');
+                setTimeout(() => {
+                    document.getElementById('victory-modal').classList.remove('hidden');
+                }, 300);
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('p1-score').innerText = state.p1Score;
+            document.getElementById('p2-score').innerText = state.p2Score;
+            document.getElementById('round-counter').innerText = `R${state.round}`;
+
+            // History badge count
+            const badge = document.getElementById('history-badge');
+            if (state.history.length > 0) {
+                badge.innerText = state.history.length;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            // Render History List
+            const listContainer = document.getElementById('history-list');
+            if (state.history.length === 0) {
+                listContainer.innerHTML = '<div class="text-center text-slate-500 text-sm py-6">尚無對戰記錄</div>';
+            } else {
+                listContainer.innerHTML = state.history.slice().reverse().map(item => `
+                    <div class="bg-slate-800/80 border border-slate-700/60 p-3 rounded-xl flex items-center justify-between text-xs">
+                        <div class="flex items-center space-x-2">
+                            <span class="px-2 py-0.5 rounded bg-slate-700 font-bold text-slate-300">R${item.round}</span>
+                            <span class="font-bold ${item.playerNum === 1 ? 'text-red-400' : 'text-cyan-400'}">${item.player}</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <span class="text-slate-300">${item.type} <strong class="text-yellow-400">+${item.points}</strong></span>
+                            <span class="text-slate-500 font-score font-bold">(${item.p1Total} : ${item.p2Total})</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function toggleHistoryDrawer() {
+            const modal = document.getElementById('history-modal');
+            modal.classList.toggle('hidden');
+        }
+
+        function openSettings() {
+            const modal = document.getElementById('settings-modal');
+            modal.classList.toggle('hidden');
+        }
+
+        function updateTargetPoints(val) {
+            state.targetPoints = parseInt(val);
+            checkMatchPointAndWinner();
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log('Fullscreen error:', err);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        // Auto orientation warning or helper if needed
+        window.addEventListener('load', () => {
+            updateUI();
+        });
+    </script>
+</body>
+</html>
