@@ -39,6 +39,15 @@
 </head>
 <body class="h-full w-full flex flex-col justify-between overflow-hidden">
 
+    <!-- Start Overlay to Trigger Native Fullscreen Safely -->
+    <div id="start-overlay" onclick="startAppWithFullscreen()" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex flex-col items-center justify-center cursor-pointer p-4">
+        <div class="w-16 h-16 rounded-full bg-blue-500/20 border-2 border-blue-500 flex items-center justify-center mb-4 text-blue-400 text-2xl animate-pulse">
+            <i class="fa-solid fa-expand"></i>
+        </div>
+        <h2 class="font-score text-2xl sm:text-3xl font-black text-white mb-2 text-center">BEYBLADE X SCOREBOARD</h2>
+        <p class="text-sm text-slate-400 font-semibold text-center">點擊螢幕任何位置進入全螢幕對戰模式</p>
+    </div>
+
     <!-- Top Bar -->
     <header class="h-10 bg-slate-900/80 border-b border-slate-800 flex items-center justify-between px-4 z-20 shrink-0">
         <div class="flex items-center space-x-2">
@@ -53,7 +62,7 @@
             <button onclick="openSettings()" class="text-slate-400 hover:text-white px-2 py-1 rounded text-xs bg-slate-800 border border-slate-700 transition">
                 <i class="fa-solid fa-gear mr-1"></i> 設定
             </button>
-            <button onclick="resetMatchConfirm()" class="text-red-400 hover:text-red-300 px-2 py-1 rounded text-xs bg-red-950/40 border border-red-900/50 transition">
+            <button onclick="openResetModal()" class="text-red-400 hover:text-red-300 px-2 py-1 rounded text-xs bg-red-950/40 border border-red-900/50 transition">
                 <i class="fa-solid fa-rotate-right mr-1"></i> 重置
             </button>
         </div>
@@ -186,6 +195,21 @@
         </section>
     </main>
 
+    <!-- Custom Non-Disruptive Reset Confirmation Modal -->
+    <div id="confirm-reset-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-2xl p-5 flex flex-col text-center shadow-2xl">
+            <div class="w-12 h-12 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center mx-auto mb-3 text-xl">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 class="font-bold text-lg text-slate-100 mb-2">確認重置分數？</h3>
+            <p class="text-xs text-slate-400 mb-5">將會清空目前的所有對戰比分與歷史記錄。</p>
+            <div class="flex space-x-3">
+                <button onclick="closeResetModal()" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold">取消</button>
+                <button onclick="executeResetMatch()" class="flex-1 py-2.5 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-bold">確認重置</button>
+            </div>
+        </div>
+    </div>
+
     <!-- History Modal / Drawer -->
     <div id="history-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl p-5 flex flex-col max-h-[85vh] shadow-2xl">
@@ -268,7 +292,7 @@
             history: [] // Array of {round, player, type, points, p1Total, p2Total}
         };
 
-        // Web Audio API Synthesizer for instant satisfying sound effects
+        // Web Audio API Synthesizer
         let audioCtx = null;
         function initAudio() {
             if (!audioCtx) {
@@ -299,7 +323,6 @@
                     osc.start(now);
                     osc.stop(now + 0.15);
                 } else if (type === 'win') {
-                    // Victory chime
                     [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
                         const o = audioCtx.createOscillator();
                         const g = audioCtx.createGain();
@@ -314,8 +337,14 @@
                     });
                 }
             } catch (e) {
-                console.log('Audio autoplay prevented or unsupported');
+                console.log('Audio error:', e);
             }
+        }
+
+        function startAppWithFullscreen() {
+            initAudio();
+            requestFullscreenMode();
+            document.getElementById('start-overlay').classList.add('hidden');
         }
 
         function scoreFinish(playerNum, finishTypeKey, points) {
@@ -340,7 +369,6 @@
 
             playSound('score');
 
-            // Record history
             state.history.push({
                 round: state.round,
                 player: playerName,
@@ -371,24 +399,30 @@
         function undoLastAction() {
             if (state.history.length === 0) return;
             initAudio();
-            const last = state.history.pop();
+            state.history.pop();
             state.p1Score = state.history.length > 0 ? state.history[state.history.length - 1].p1Total : 0;
             state.p2Score = state.history.length > 0 ? state.history[state.history.length - 1].p2Total : 0;
             state.round = Math.max(1, state.round - 1);
             updateUI();
-            // Hide victory modal if undoing from a winning state
             document.getElementById('victory-modal').classList.add('hidden');
         }
 
-        function resetMatchConfirm() {
-            if (confirm('確定要重置目前對戰分數嗎？')) {
-                state.p1Score = 0;
-                state.p2Score = 0;
-                state.round = 1;
-                state.history = [];
-                updateUI();
-                document.getElementById('victory-modal').classList.add('hidden');
-            }
+        function openResetModal() {
+            document.getElementById('confirm-reset-modal').classList.remove('hidden');
+        }
+
+        function closeResetModal() {
+            document.getElementById('confirm-reset-modal').classList.add('hidden');
+        }
+
+        function executeResetMatch() {
+            state.p1Score = 0;
+            state.p2Score = 0;
+            state.round = 1;
+            state.history = [];
+            updateUI();
+            closeResetModal();
+            document.getElementById('victory-modal').classList.add('hidden');
         }
 
         function startNewMatch() {
@@ -400,12 +434,15 @@
             document.getElementById('victory-modal').classList.add('hidden');
         }
 
+        function closeVictoryModal() {
+            document.getElementById('victory-modal').classList.add('hidden');
+        }
+
         function checkMatchPointAndWinner() {
             const target = state.targetPoints;
             const p1Badge = document.getElementById('p1-matchpoint-badge');
             const p2Badge = document.getElementById('p2-matchpoint-badge');
 
-            // Match Point Check
             if (state.p1Score >= target - 1 && state.p1Score < target && state.p1Score > state.p2Score) {
                 p1Badge.classList.remove('hidden');
             } else {
@@ -418,7 +455,6 @@
                 p2Badge.classList.add('hidden');
             }
 
-            // Winner Check (First to reach target points)
             if (state.p1Score >= target || state.p2Score >= target) {
                 const winnerName = state.p1Score >= target ? document.getElementById('p1-name').value : document.getElementById('p2-name').value;
                 document.getElementById('winner-name-display').innerText = `${winnerName} 獲勝！`;
@@ -434,7 +470,6 @@
             document.getElementById('p2-score').innerText = state.p2Score;
             document.getElementById('round-counter').innerText = `R${state.round}`;
 
-            // History badge count
             const badge = document.getElementById('history-badge');
             if (state.history.length > 0) {
                 badge.innerText = state.history.length;
@@ -443,7 +478,6 @@
                 badge.classList.add('hidden');
             }
 
-            // Render History List
             const listContainer = document.getElementById('history-list');
             if (state.history.length === 0) {
                 listContainer.innerHTML = '<div class="text-center text-slate-500 text-sm py-6">尚無對戰記錄</div>';
@@ -478,19 +512,29 @@
             checkMatchPointAndWinner();
         }
 
+        function requestFullscreenMode() {
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen().catch(err => console.log('Fullscreen error:', err));
+            } else if (elem.webkitRequestFullscreen) {
+                elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) {
+                elem.msRequestFullscreen();
+            }
+        }
+
         function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => {
-                    console.log('Fullscreen error:', err);
-                });
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                requestFullscreenMode();
             } else {
                 if (document.exitFullscreen) {
                     document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
                 }
             }
         }
 
-        // Auto orientation warning or helper if needed
         window.addEventListener('load', () => {
             updateUI();
         });
